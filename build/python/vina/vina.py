@@ -34,7 +34,7 @@ class Vina:
             raise ValueError('Error: Scoring function %s not recognized. (only vina, vinardo or ad4)' % sf_name)
 
         self._vina = _Vina(sf_name, cpu, seed, verbosity, no_refine)
-        
+
         self._sf_name = sf_name
         if sf_name == 'vina':
             self._weights = (-0.035579, -0.005156, 0.840245, -0.035069, -0.587439, 50, 0.05846)
@@ -56,10 +56,10 @@ class Vina:
         self._seed = self._vina.seed()
 
     def __str__(self):
-        """Print basic information about Docking configuration (rigid receptor, flex receptor, 
-            ligands, scoring function, weights, no_refine, box center, box dimensions, 
+        """Print basic information about Docking configuration (rigid receptor, flex receptor,
+            ligands, scoring function, weights, no_refine, box center, box dimensions,
             box spacing, box even nelements, seed).
-            
+
         """
         info = "Receptor (rigid): %s\n" % self._rigid_receptor
         info += "Receptor (flex): %s\n" % self._flex_receptor
@@ -82,17 +82,17 @@ class Vina:
         info += "Seed: %s" % self._seed
 
         return info
-    
+
     def cite(self):
         """Print citation message."""
         self._vina.cite()
 
     def info(self):
         """Return information about the docking configuration.
-        
+
         Returns:
             dict (str): Dictionary of information about the docking configuration.
-            
+
             Information:
                 rigid_receptor (str),
                 flex_receptor (str),
@@ -105,7 +105,7 @@ class Vina:
                 box_spacing (float),
                 box_even_elements (bool),
                 seed (int)
-        
+
         """
         info = {}
 
@@ -120,7 +120,7 @@ class Vina:
         info['box_spacing'] = self._spacing
         info['box_even_elements'] = self._even_nelements
         info['seed'] = self._seed
-        
+
         return info
 
     def set_receptor(self, rigid_pdbqt_filename=None, flex_pdbqt_filename=None):
@@ -184,7 +184,7 @@ class Vina:
             self._vina.set_ligand_from_file(pdbqt_filename)
 
         self._ligands = pdbqt_filename
-    
+
     def set_ligand_from_string(self, pdbqt_string):
         """Set ligand(s) from a string. The chemical file format must be PDBQT.
 
@@ -194,7 +194,7 @@ class Vina:
         """
         if not isinstance(pdbqt_string, (list, tuple)):
             pdbqt_string = [pdbqt_string]
-        
+
         for ps in pdbqt_string:
             if not isinstance(ps, str):
                 raise TypeError('Error: %s is not a string.' % ps)
@@ -257,7 +257,7 @@ class Vina:
         self._center = center
         self._box_size = box_size
         self._spacing = spacing
-        self._voxels = np.ceil(np.array(box_size) / self._spacing).astype(np.int)
+        self._voxels = np.ceil(np.array(box_size) / self._spacing).astype(int)
 
         # Necessary step to know if we can write maps or not later
         if force_even_voxels:
@@ -276,7 +276,7 @@ class Vina:
             raise RuntimeError('Error: Cannot find affinity maps with %s' % map_prefix_filename)
 
         self._vina.load_maps(map_prefix_filename)
-    
+
     def write_maps(self, map_prefix_filename='receptor', gpf_filename='NULL',
                    fld_filename='NULL', receptor_filename='NULL', overwrite=False):
         """Write affinity maps.
@@ -302,7 +302,7 @@ class Vina:
             raise RuntimeError(error_msg)
 
         self._vina.write_maps(map_prefix_filename, gpf_filename, fld_filename, receptor_filename)
-    
+
     def write_pose(self, pdbqt_filename, remarks='', overwrite=False):
         """Write pose (after randomize or optimize).
 
@@ -319,7 +319,7 @@ class Vina:
                 raise RuntimeError('Error: Cannot overwrite %s, already exists.' % pdbqt_filename)
 
         self._vina.write_pose(pdbqt_filename, remarks)
-    
+
     def write_poses(self, pdbqt_filename, n_poses=9, energy_range=3.0, overwrite=False):
         """Write poses from docking.
 
@@ -344,7 +344,7 @@ class Vina:
             raise ValueError('Error: energy range must be greater than zero.')
 
         self._vina.write_poses(pdbqt_filename, n_poses, energy_range)
-    
+
     def poses(self, n_poses=9, energy_range=3.0, coordinates_only=False):
         """Get poses from docking.
 
@@ -361,7 +361,7 @@ class Vina:
             raise ValueError('Error: number of poses written must be greater than zero.')
         elif energy_range <= 0:
             raise ValueError('Error: energy range must be greater than zero.')
-        
+
         if coordinates_only:
             # Dirty hack to get the coordinates from C++, it is not advised to have vector<vector<vector<double>>>
             coordinates = np.array(self._vina.get_poses_coordinates(n_poses, energy_range))
@@ -370,20 +370,20 @@ class Vina:
             return coordinates
         else:
             return self._vina.get_poses(n_poses, energy_range)
-    
+
     def energies(self, n_poses=9, energy_range=3.0):
         """Get pose energies from docking.
 
         Args:
             n_pose (int): number of poses to retrieve (default: 9)
             energy_range (float): maximum energy difference from best pose (default: 3.0 kcal/mol)
-        
+
         Returns:
-            ndarray: Array of energies from each pose (rows=poses, columns=energies) 
-            
+            ndarray: Array of energies from each pose (rows=poses, columns=energies)
+
             Vina/Vinardo FF:
                 columns=[total, inter, intra, torsions, intra best pose]
-            
+
             AutoDock FF:
                 columns=[total, inter, intra, torsions, -intra]
 
@@ -398,7 +398,7 @@ class Vina:
     def randomize(self):
         """Randomize the input ligand conformation."""
         self._vina.randomize()
-    
+
     def score(self):
         """Score current pose.
 
@@ -407,7 +407,7 @@ class Vina:
 
             Vina/Vinardo FF:
                 columns=[total, lig_inter, flex_inter, other_inter, flex_intra, lig_intra, torsions, lig_intra best pose]
-            
+
             AutoDock FF:
                 columns=[total, lig_inter, flex_inter, other_inter, flex_intra, lig_intra, torsions, -lig_intra]
 
@@ -429,7 +429,7 @@ class Vina:
 
             Vina/Vinardo FF:
                 columns=[total, lig_inter, flex_inter, other_inter, flex_intra, lig_intra, torsions, lig_intra best pose]
-            
+
             AutoDock FF:
                 columns=[total, lig_inter, flex_inter, other_inter, flex_intra, lig_intra, torsions, -lig_intra]
 
